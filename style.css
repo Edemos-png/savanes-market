@@ -1,0 +1,84 @@
+/* Importation de la police Google Font */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+/* Configuration globale */
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+/* Arrière-plan personnalisé pour le Hero */
+.hero-bg {
+    background: linear-gradient(135deg, #14532d 0%, #166534 50%, #064e3b 100%);
+}
+
+/* Animations au survol des cartes */
+.product-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.product-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.feature-box {
+    transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.feature-box:hover {
+    transform: translateY(-5px);
+    border-color: #166534;
+}
+
+/* Personnalisation des champs de formulaire */
+input:focus, select:focus {
+    border-color: #166534 !important;
+}
+
+/* Barre de défilement (Scrollbar) personnalisée */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #166534;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #14532d;
+}
+/* Nouveaux ajouts pour l'Étape 2 */
+
+/* Style du bouton filtre actif */
+.active-filter {
+    background-color: #166534 !important;
+    color: #ffffff !important;
+}
+
+/* Effet d'apparition douce des cartes */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.4s ease forwards;
+}
+/* Animation pour les notifications Toast */
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.toast-item {
+    animation: slideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
