@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', async () => {
 
-    // 1. INITIALISATION DE SUPABASE (Remplacez avec vos identifiants Supabase)
-    const SUPABASE_URL = "https://qejnwadpoxummrixnwyy.supabase.co"; 
+    // 1. CONFIGURATION SUPABASE
+    const SUPABASE_URL = "https://qejnwadpoxummrixnwyy.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlam53YWRwb3h1bW1yaXhud3l5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU2ODIwMjEsImV4cCI6MjEwMTI1ODAyMX0.fXDorRfOHiKcixhmYgUZBxV0KbEAySJul4THOR0cc1I";
 
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -17,9 +17,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const cityFilter = document.getElementById('city-filter');
     const resetBtn = document.getElementById('reset-filters-btn');
 
-    
-
-    // 2. NOTIFICATIONS TOAST
+    // 2. GESTION DES NOTIFICATIONS (TOASTS)
     function showNotification(message, type = 'success') {
         const toastContainer = document.getElementById('toast-container');
         if (!toastContainer) return;
@@ -41,7 +39,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }, 4000);
     }
 
-    // 3. CHARGEMENT DEPUIS LA BASE DE DONNÉES (SUPABASE)
+    // 3. CHARGEMENT DEPUIS SUPABASE
     async function loadProductsFromSupabase() {
         try {
             const { data, error } = await supabase
@@ -54,49 +52,60 @@ document.addEventListener('DOMContentLoaded', async () => {
             products = data || [];
             applyCombinedFilters();
         } catch (err) {
-            console.error("Erreur de chargement :", err.message);
-            showNotification("Erreur de connexion à la base de données", 'error');
+            console.error("Erreur chargement :", err.message);
         }
     }
 
-    // 4. AFFICHAGE DES PRODUITS
-    // Dans renderProducts(items) :
-items.forEach(prod => {
-    const message = encodeURIComponent(`Bonjour ${prod.vendor}, je suis intéressé par votre annonce sur Savanes Market : "${prod.name}" à ${prod.location}. Est-ce toujours disponible ?`);
-    const whatsappUrl = `https://wa.me/${prod.phone}?text=${message}`;
+    // 4. AFFICHAGE DES CARTES DE PRODUITS (AVEC ICÔNES)
+    function renderProducts(items) {
+        if (!productGrid) return;
+        productGrid.innerHTML = '';
 
-    // Si une vraie photo existe, on l'affiche, sinon on affiche l'icône emoji
-    const mediaHTML = prod.image_url 
-        ? `<img src="${prod.image_url}" alt="${prod.name}" class="w-full h-48 object-cover rounded-xl mb-4">`
-        : `<div class="w-full h-32 bg-gray-100 rounded-xl mb-4 flex items-center justify-center text-4xl">${prod.icon || '🌾'}</div>`;
+        if (resultsCount) {
+            resultsCount.textContent = `${items.length} produit(s) disponible(s)`;
+        }
 
-    const card = document.createElement('div');
-    card.className = 'bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition animate-fade-in flex flex-col justify-between';
-    card.innerHTML = `
-        <div>
-            ${mediaHTML}
-            <div class="flex items-center justify-between mb-2">
-                <span class="bg-green-100 text-green-800 text-xs font-bold px-2.5 py-1 rounded-full uppercase">${prod.location}</span>
-                <span class="text-xs text-gray-400">${prod.category}</span>
-            </div>
-            <h3 class="font-extrabold text-lg text-gray-900">${prod.name}</h3>
-            <p class="text-green-800 font-extrabold text-xl mt-1">${prod.price}</p>
-            
-            <div class="mt-4 pt-3 border-t border-gray-100 space-y-1.5 text-xs text-gray-600">
-                <p><i class="fa-solid fa-boxes-stacked text-amber-600 mr-2"></i><strong>Stock :</strong> ${prod.quantity}</p>
-                <p><i class="fa-solid fa-user text-green-700 mr-2"></i><strong>Vendeur :</strong> ${prod.vendor}</p>
-            </div>
-        </div>
+        if (items.length === 0) {
+            productGrid.innerHTML = `
+                <div class="col-span-full text-center py-12 bg-gray-50 rounded-2xl border border-dashed border-gray-300">
+                    <i class="fa-solid fa-box-open text-4xl text-gray-400 mb-3"></i>
+                    <p class="text-gray-600 font-bold">Aucun produit ne correspond à vos critères.</p>
+                </div>
+            `;
+            return;
+        }
 
-        <a href="${whatsappUrl}" target="_blank" class="mt-6 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center space-x-2 transition shadow-sm">
-            <i class="fa-brands fa-whatsapp text-lg"></i>
-            <span>Contacter le vendeur</span>
-        </a>
-    `;
-    productGrid.appendChild(card);
-});
+        items.forEach(prod => {
+            const message = encodeURIComponent(`Bonjour ${prod.vendor}, je suis intéressé par votre annonce sur Savanes Market : "${prod.name}" à ${prod.location}. Est-ce toujours disponible ?`);
+            const whatsappUrl = `https://wa.me/${prod.phone}?text=${message}`;
 
-    // 5. FILTRAGE COMBINÉ
+            const card = document.createElement('div');
+            card.className = 'bg-white border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition animate-fade-in flex flex-col justify-between';
+            card.innerHTML = `
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="text-3xl">${prod.icon || '🌾'}</span>
+                        <span class="bg-green-100 text-green-800 text-xs font-bold px-3 py-1 rounded-full uppercase">${prod.location}</span>
+                    </div>
+                    <h3 class="font-extrabold text-lg text-gray-900">${prod.name}</h3>
+                    <p class="text-green-800 font-extrabold text-xl mt-1">${prod.price}</p>
+                    
+                    <div class="mt-4 pt-4 border-t border-gray-100 space-y-2 text-xs text-gray-600">
+                        <p><i class="fa-solid fa-boxes-stacked text-amber-600 mr-2"></i><strong>Stock :</strong> ${prod.quantity}</p>
+                        <p><i class="fa-solid fa-user text-green-700 mr-2"></i><strong>Vendeur :</strong> ${prod.vendor}</p>
+                    </div>
+                </div>
+
+                <a href="${whatsappUrl}" target="_blank" class="mt-6 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center space-x-2 transition shadow-sm">
+                    <i class="fa-brands fa-whatsapp text-lg"></i>
+                    <span>Contacter le vendeur</span>
+                </a>
+            `;
+            productGrid.appendChild(card);
+        });
+    }
+
+    // 5. MOTEUR DE RECHERCHE ET FILTRAGE COMBINÉ
     function applyCombinedFilters() {
         let filtered = products.filter(p => {
             const matchCategory = (activeCategory === 'tous') || (p.category === activeCategory);
@@ -114,7 +123,7 @@ items.forEach(prod => {
         renderProducts(filtered);
     }
 
-    // ÉCOUTEURS D'ÉVÉNEMENTS
+    // Écouteurs d'événements Filtres
     if (searchInput) {
         searchInput.addEventListener('input', (e) => {
             searchQuery = e.target.value;
@@ -164,101 +173,48 @@ items.forEach(prod => {
         });
     }
 
-    // 6. ENREGISTRER UN NOUVEAU PRODUIT DANS SUPABASE
-    // GESTION BLINDÉE DE LA FENÊTRE MODALE
-const modal = document.getElementById('add-product-modal');
-const openModalBtn = document.getElementById('open-modal-btn');
-const closeModalBtn = document.getElementById('close-modal-btn');
-
-if (modal) {
-    // 1. Clic sur le bouton "Publier une annonce" -> Ouvre la fenêtre
-    if (openModalBtn) {
-        openModalBtn.onclick = function(e) {
-            e.preventDefault();
-            modal.classList.remove('hidden');
-        };
-    }
-
-    // 2. Clic sur la croix (X) -> Ferme la fenêtre
-    if (closeModalBtn) {
-        closeModalBtn.onclick = function(e) {
-            e.preventDefault();
-            modal.classList.add('hidden');
-        };
-    }
-
-    // 3. Clic en dehors de la fenêtre -> Ferme aussi la fenêtre
-    window.onclick = function(e) {
-        if (e.target === modal) {
-            modal.classList.add('hidden');
-        }
-    };
-}
-
+    // 6. SOUMISSION DU FORMULAIRE D'AJOUT (SIMPLE & RAPIDE)
+    const addProductForm = document.getElementById('add-product-form');
     if (addProductForm) {
-    addProductForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        showNotification("Publication en cours...", 'info');
+        addProductForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
 
-        const imageFileInput = document.getElementById('prod-image');
-        const imageFile = imageFileInput ? imageFileInput.files[0] : null;
-        let imageUrl = null;
+            const categoryVal = document.getElementById('prod-category').value;
+            const newProduct = {
+                name: document.getElementById('prod-name').value,
+                category: categoryVal,
+                price: document.getElementById('prod-price').value,
+                quantity: document.getElementById('prod-quantity').value,
+                location: document.getElementById('prod-location').value,
+                vendor: "Producteur Local",
+                phone: document.getElementById('prod-whatsapp').value,
+                icon: categoryVal === 'cereales' ? '🌾' : (categoryVal === 'elevage' ? '🐐' : '🍅')
+            };
 
-        // 1. Si une photo a été sélectionnée, on l'envoie sur Supabase Storage
-        if (imageFile) {
-            try {
-                const fileExt = imageFile.name.split('.').pop();
-                const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
+            // Insertion dans la BDD Supabase
+            const { data, error } = await supabase
+                .from('products')
+                .insert([newProduct])
+                .select();
 
-                const { data: uploadData, error: uploadError } = await supabase.storage
-                    .from('product-images')
-                    .upload(fileName, imageFile);
+            if (error) {
+                console.error("Erreur publication :", error);
+                showNotification("Erreur lors de la publication", 'error');
+            } else {
+                // Recharger immédiatement la liste complète
+                await loadProductsFromSupabase();
 
-                if (uploadError) throw uploadError;
+                // Fermer la fenêtre modale
+                const modal = document.getElementById('add-product-modal');
+                if (modal) modal.classList.add('hidden');
 
-                // Récupérer l'URL publique de la photo
-                const { data: urlData } = supabase.storage
-                    .from('product-images')
-                    .getPublicUrl(fileName);
-
-                imageUrl = urlData.publicUrl;
-            } catch (err) {
-                console.error("Erreur lors de l'upload de l'image :", err.message);
-                showNotification("Avertissement: La photo n'a pas pu être envoyée", 'error');
+                addProductForm.reset();
+                showNotification("Produit publié avec succès !");
             }
-        }
+        });
+    }
 
-        // 2. Création de l'objet produit
-        const categoryVal = document.getElementById('prod-category').value;
-        const newProduct = {
-            name: document.getElementById('prod-name').value,
-            category: categoryVal,
-            price: document.getElementById('prod-price').value,
-            quantity: document.getElementById('prod-quantity').value,
-            location: document.getElementById('prod-location').value,
-            vendor: "Producteur Local",
-            phone: document.getElementById('prod-whatsapp').value,
-            icon: categoryVal === 'cereales' ? '🌾' : (categoryVal === 'elevage' ? '🐐' : '🍅'),
-            image_url: imageUrl // URL de la vraie photo envoyée
-        };
-
-        // 3. Insertion dans la base de données
-        const { data, error } = await supabase.from('products').insert([newProduct]).select();
-
-        if (error) {
-            console.error(error);
-            showNotification("Erreur lors de la publication", 'error');
-        } else {
-            products.unshift(data[0]);
-            applyCombinedFilters();
-            modal.classList.add('hidden');
-            addProductForm.reset();
-            showNotification("Produit publié avec succès avec sa photo !");
-        }
-    });
-}
-
-    // 7. ENREGISTRER UNE PRÉ-INSCRIPTION DANS SUPABASE
+    // 7. SOUMISSION PRÉ-INSCRIPTION
     const signupForm = document.getElementById('signup-form');
     if (signupForm) {
         signupForm.addEventListener('submit', async (e) => {
@@ -275,10 +231,10 @@ if (modal) {
             const { error } = await supabase.from('registrations').insert([newRegistration]);
 
             if (error) {
-                showNotification("Erreur lors de l'inscription", 'error');
+                showNotification("Erreur d'inscription", 'error');
             } else {
                 signupForm.reset();
-                showNotification("Pré-inscription enregistrée dans la BDD !");
+                showNotification("Pré-inscription enregistrée avec succès !");
             }
         });
     }
