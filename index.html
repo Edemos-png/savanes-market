@@ -249,9 +249,9 @@
 <!-- MODAL / FENÊTRE SURPRIS POUR AJOUTER UN PRODUIT -->
 <div id="add-product-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl relative max-h-[90vh] overflow-y-auto">
-        <button id="open-modal-btn" class="absolute top-5 right-5 text-gray-400 hover:text-gray-600 text-xl">
-            <i class="fa-solid fa-xmark"></i>
-        </button>
+        <button onclick="document.getElementById('add-product-modal').classList.add('hidden')" class="absolute top-5 right-5 text-gray-400 hover:text-gray-600 text-xl cursor-pointer">
+    <i class="fa-solid fa-xmark"></i>
+</button>
 
         <h3 class="text-2xl font-bold text-gray-900 mb-2">Publier un produit</h3>
         <p class="text-sm text-gray-500 mb-6">Proposez vos récoltes ou votre bétail aux acheteurs de la région.</p>
