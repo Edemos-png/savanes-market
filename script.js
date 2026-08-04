@@ -17,6 +17,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const cityFilter = document.getElementById('city-filter');
     const resetBtn = document.getElementById('reset-filters-btn');
 
+    
+
     // 2. NOTIFICATIONS TOAST
     function showNotification(message, type = 'success') {
         const toastContainer = document.getElementById('toast-container');
@@ -163,15 +165,35 @@ items.forEach(prod => {
     }
 
     // 6. ENREGISTRER UN NOUVEAU PRODUIT DANS SUPABASE
-    const modal = document.getElementById('add-product-modal');
-    const openModalBtn = document.getElementById('open-modal-btn');
-    const closeModalBtn = document.getElementById('close-modal-btn');
-    const addProductForm = document.getElementById('add-product-form');
+    // GESTION BLINDÉE DE LA FENÊTRE MODALE
+const modal = document.getElementById('add-product-modal');
+const openModalBtn = document.getElementById('open-modal-btn');
+const closeModalBtn = document.getElementById('close-modal-btn');
 
-    if (openModalBtn && modal) {
-        openModalBtn.addEventListener('click', () => modal.classList.remove('hidden'));
-        closeModalBtn.addEventListener('click', () => modal.classList.add('hidden'));
+if (modal) {
+    // 1. Clic sur le bouton "Publier une annonce" -> Ouvre la fenêtre
+    if (openModalBtn) {
+        openModalBtn.onclick = function(e) {
+            e.preventDefault();
+            modal.classList.remove('hidden');
+        };
     }
+
+    // 2. Clic sur la croix (X) -> Ferme la fenêtre
+    if (closeModalBtn) {
+        closeModalBtn.onclick = function(e) {
+            e.preventDefault();
+            modal.classList.add('hidden');
+        };
+    }
+
+    // 3. Clic en dehors de la fenêtre -> Ferme aussi la fenêtre
+    window.onclick = function(e) {
+        if (e.target === modal) {
+            modal.classList.add('hidden');
+        }
+    };
+}
 
     if (addProductForm) {
     addProductForm.addEventListener('submit', async (e) => {
