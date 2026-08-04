@@ -1,68 +1,12 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
 
-    // 1. PRODUITS PAR DÉFAUT (Utilisés si le LocalStorage est vide)
-    const initialProducts = [
-        {
-            id: 1,
-            name: "Maïs Blanc Séché",
-            category: "cereales",
-            price: "19 500 FCFA / Sac",
-            quantity: "100 Sacs de 100kg",
-            location: "Cinkassé",
-            vendor: "Malam Barka",
-            phone: "22890000000",
-            icon: "🌾"
-        },
-        {
-            id: 2,
-            name: "Bovins de Race Peulh",
-            category: "elevage",
-            price: "250 000 FCFA / Tête",
-            quantity: "8 Têtes disponibles",
-            location: "Dapaong",
-            vendor: "Oumarou Diallo",
-            phone: "22891111111",
-            icon: "🐂"
-        },
-        {
-            id: 3,
-            name: "Oignons Rouges de Gando",
-            category: "maraichage",
-            price: "25 000 FCFA / Sac",
-            quantity: "40 Sacs",
-            location: "Kpendjal",
-            vendor: "Coopérative Songou",
-            phone: "22892222222",
-            icon: "🧅"
-        },
-        {
-            id: 4,
-            name: "Soja Graines Jaunes",
-            category: "cereales",
-            price: "350 FCFA / Kg",
-            quantity: "5 Tonnes",
-            location: "Mango",
-            vendor: "Yao Yobre",
-            phone: "22893333333",
-            icon: "🌱"
-        },
-        {
-            id: 5,
-            name: "Poulets de Chair Locaux",
-            category: "elevage",
-            price: "3 500 FCFA / Unité",
-            quantity: "150 Volailles",
-            location: "Tandjouaré",
-            vendor: "Ferme Espoir",
-            phone: "22894444444",
-            icon: "🐔"
-        }
-    ];
+    // 1. INITIALISATION DE SUPABASE (Remplacez avec vos identifiants Supabase)
+    const SUPABASE_URL = "https://qejnwadpoxummrixnwyy.supabase.co"; 
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlam53YWRwb3h1bW1yaXhud3l5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU2ODIwMjEsImV4cCI6MjEwMTI1ODAyMX0.fXDorRfOHiKcixhmYgUZBxV0KbEAySJul4THOR0cc1I";
 
-    // Charger les produits depuis le LocalStorage (ou charger la liste initiale)
-    let products = JSON.parse(localStorage.getItem('savanes_market_products')) || initialProducts;
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // État des filtres
+    let products = [];
     let activeCategory = 'tous';
     let searchQuery = '';
     let selectedCity = 'toutes';
@@ -73,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const cityFilter = document.getElementById('city-filter');
     const resetBtn = document.getElementById('reset-filters-btn');
 
-    // 2. SYSTÈME DE NOTIFICATIONS (TOASTS)
+    // 2. NOTIFICATIONS TOAST
     function showNotification(message, type = 'success') {
         const toastContainer = document.getElementById('toast-container');
         if (!toastContainer) return;
@@ -85,7 +29,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const icon = type === 'success' ? 'fa-circle-check' : 'fa-circle-info';
         toast.innerHTML = `<i class="fa-solid ${icon} text-lg"></i> <span>${message}</span>`;
-
         toastContainer.appendChild(toast);
 
         setTimeout(() => {
@@ -96,7 +39,25 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 4000);
     }
 
-    // 3. AFFICHAGE DES PRODUITS
+    // 3. CHARGEMENT DEPUIS LA BASE DE DONNÉES (SUPABASE)
+    async function loadProductsFromSupabase() {
+        try {
+            const { data, error } = await supabase
+                .from('products')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+
+            products = data || [];
+            applyCombinedFilters();
+        } catch (err) {
+            console.error("Erreur de chargement :", err.message);
+            showNotification("Erreur de connexion à la base de données", 'error');
+        }
+    }
+
+    // 4. AFFICHAGE DES PRODUITS
     function renderProducts(items) {
         if (!productGrid) return;
         productGrid.innerHTML = '';
@@ -110,7 +71,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="col-span-full text-center py-12 bg-gray-50 rounded-2xl border border-dashed border-gray-300">
                     <i class="fa-solid fa-box-open text-4xl text-gray-400 mb-3"></i>
                     <p class="text-gray-600 font-bold">Aucun produit ne correspond à vos critères.</p>
-                    <p class="text-gray-400 text-xs mt-1">Modifiez vos mots-clés ou cliquez sur Réinitialiser.</p>
                 </div>
             `;
             return;
@@ -146,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 4. MOTEUR DE FILTRAGE COMBINÉ
+    // 5. FILTRAGE COMBINÉ
     function applyCombinedFilters() {
         let filtered = products.filter(p => {
             const matchCategory = (activeCategory === 'tous') || (p.category === activeCategory);
@@ -214,9 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    applyCombinedFilters();
-
-    // 5. AJOUT DE PRODUIT AVEC SAUVEGARDE EN MEMOIRE (LOCALSTORAGE)
+    // 6. ENREGISTRER UN NOUVEAU PRODUIT DANS SUPABASE
     const modal = document.getElementById('add-product-modal');
     const openModalBtn = document.getElementById('open-modal-btn');
     const closeModalBtn = document.getElementById('close-modal-btn');
@@ -228,53 +186,70 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (addProductForm) {
-        addProductForm.addEventListener('submit', (e) => {
+        addProductForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
+            const categoryVal = document.getElementById('prod-category').value;
             const newProduct = {
-                id: Date.now(), // Identifiant unique basé sur l'heure
                 name: document.getElementById('prod-name').value,
-                category: document.getElementById('prod-category').value,
+                category: categoryVal,
                 price: document.getElementById('prod-price').value,
                 quantity: document.getElementById('prod-quantity').value,
                 location: document.getElementById('prod-location').value,
                 vendor: "Producteur Local",
                 phone: document.getElementById('prod-whatsapp').value,
-                icon: document.getElementById('prod-category').value === 'cereales' ? '🌾' : 
-                      document.getElementById('prod-category').value === 'elevage' ? '🐐' : '🍅'
+                icon: categoryVal === 'cereales' ? '🌾' : (categoryVal === 'elevage' ? '🐐' : '🍅')
             };
 
-            // Ajouter au début du tableau
-            products.unshift(newProduct);
+            // Insertion dans la vraie BDD Supabase
+            const { data, error } = await supabase.from('products').insert([newProduct]).select();
 
-            // Sauvegarder dans le navigateur
-            localStorage.setItem('savanes_market_products', JSON.stringify(products));
-
-            // Rafraîchir l'affichage
-            applyCombinedFilters();
-
-            // Masquer la modal et notifier
-            modal.classList.add('hidden');
-            addProductForm.reset();
-            showNotification("Votre annonce a été publiée avec succès !");
+            if (error) {
+                console.error(error);
+                showNotification("Erreur lors de la publication", 'error');
+            } else {
+                products.unshift(data[0]);
+                applyCombinedFilters();
+                modal.classList.add('hidden');
+                addProductForm.reset();
+                showNotification("Produit publié en direct sur le serveur !");
+            }
         });
     }
 
-    // 6. MENU MOBILE
+    // 7. ENREGISTRER UNE PRÉ-INSCRIPTION DANS SUPABASE
+    const signupForm = document.getElementById('signup-form');
+    if (signupForm) {
+        signupForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const newRegistration = {
+                role: document.getElementById('user-role').value,
+                name: document.getElementById('user-name').value,
+                phone: document.getElementById('user-phone').value,
+                city: document.getElementById('user-city').value,
+                products: document.getElementById('user-products').value
+            };
+
+            const { error } = await supabase.from('registrations').insert([newRegistration]);
+
+            if (error) {
+                showNotification("Erreur lors de l'inscription", 'error');
+            } else {
+                signupForm.reset();
+                showNotification("Pré-inscription enregistrée dans la BDD !");
+            }
+        });
+    }
+
+    // 8. MENU MOBILE
     const menuBtn = document.getElementById('menu-btn');
     const mobileMenu = document.getElementById('mobile-menu');
     if (menuBtn && mobileMenu) {
         menuBtn.addEventListener('click', () => mobileMenu.classList.toggle('hidden'));
     }
 
-    // FORMULAIRE PRÉ-INSCRIPTION
-    const signupForm = document.getElementById('signup-form');
-    if (signupForm) {
-        signupForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            signupForm.reset();
-            showNotification("Pré-inscription enregistrée ! Merci de votre confiance.");
-        });
-    }
+    // Lancement du chargement initial
+    loadProductsFromSupabase();
 
 });
